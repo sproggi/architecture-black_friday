@@ -2,16 +2,16 @@
 
 ## Как запустить
 
-Запускаем mongodb и приложение
+Останавливаем все запущенные контейнеры с очисткой volumes 
+
+```shell
+docker compose down -v
+```
+
+Запускаем всю сборку в одной команде
 
 ```shell
 docker compose up -d
-```
-
-Заполняем mongodb данными
-
-```shell
-./scripts/mongo-init.sh
 ```
 
 ## Как проверить
@@ -33,3 +33,9 @@ curl --silent http://ifconfig.me
 ## Доступные эндпоинты
 
 Список доступных эндпоинтов, swagger http://<ip виртуальной машины>:8080/docs
+
+## Проверка коллекции при помощи curl
+
+```shell
+curl http://localhost:8080/helloDoc/count
+``` 
