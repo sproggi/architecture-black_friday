@@ -1,4 +1,4 @@
-name: mongo-sharding
+name: mongo-sharding-repl
 
 services:
   configSrv:
@@ -28,9 +28,9 @@ services:
       retries: 5
       start_period: 20s
 
-  shard1:
+  shard1-primary:
     image: mongo:latest
-    container_name: shard1
+    container_name: shard1-primary
     restart: always
     ports:
       - "27018:27018"
@@ -38,7 +38,7 @@ services:
       app-network:
         ipv4_address: 173.17.0.9
     volumes:
-      - shard1-data:/data/db
+      - shard1-primary-data:/data/db
     command:
       [
         "--shardsvr",
@@ -55,9 +55,63 @@ services:
       retries: 5
       start_period: 20s
 
-  shard2:
+  shard1-secondary1:
     image: mongo:latest
-    container_name: shard2
+    container_name: shard1-secondary1
+    restart: always
+    ports:
+      - "27021:27018"
+    networks:
+      app-network:
+        ipv4_address: 173.17.0.6
+    volumes:
+      - shard1-secondary1-data:/data/db
+    command:
+      [
+        "--shardsvr",
+        "--replSet",
+        "shard1",
+        "--bind_ip_all",
+        "--port",
+        "27018"
+      ]
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --port 27018 --eval 'db.adminCommand(\"ping\")' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  shard1-secondary2:
+    image: mongo:latest
+    container_name: shard1-secondary2
+    restart: always
+    ports:
+      - "27022:27018"
+    networks:
+      app-network:
+        ipv4_address: 173.17.0.5
+    volumes:
+      - shard1-secondary2-data:/data/db
+    command:
+      [
+        "--shardsvr",
+        "--replSet",
+        "shard1",
+        "--bind_ip_all",
+        "--port",
+        "27018"
+      ]
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --port 27018 --eval 'db.adminCommand(\"ping\")' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  shard2-primary:
+    image: mongo:latest
+    container_name: shard2-primary
     restart: always
     ports:
       - "27019:27019"
@@ -65,7 +119,61 @@ services:
       app-network:
         ipv4_address: 173.17.0.8
     volumes:
-      - shard2-data:/data/db
+      - shard2-primary-data:/data/db
+    command:
+      [
+        "--shardsvr",
+        "--replSet",
+        "shard2",
+        "--bind_ip_all",
+        "--port",
+        "27019"
+      ]
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --port 27019 --eval 'db.adminCommand(\"ping\")' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  shard2-secondary1:
+    image: mongo:latest
+    container_name: shard2-secondary1
+    restart: always
+    ports:
+      - "27023:27019"
+    networks:
+      app-network:
+        ipv4_address: 173.17.0.4
+    volumes:
+      - shard2-secondary1-data:/data/db
+    command:
+      [
+        "--shardsvr",
+        "--replSet",
+        "shard2",
+        "--bind_ip_all",
+        "--port",
+        "27019"
+      ]
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --port 27019 --eval 'db.adminCommand(\"ping\")' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  shard2-secondary2:
+    image: mongo:latest
+    container_name: shard2-secondary2
+    restart: always
+    ports:
+      - "27024:27019"
+    networks:
+      app-network:
+        ipv4_address: 173.17.0.3
+    volumes:
+      - shard2-secondary2-data:/data/db
     command:
       [
         "--shardsvr",
@@ -88,19 +196,23 @@ services:
     depends_on:
       configSrv:
         condition: service_healthy
-      shard1:
+      shard1-primary:
         condition: service_healthy
-      shard2:
+      shard1-secondary1:
+        condition: service_healthy
+      shard1-secondary2:
+        condition: service_healthy
+      shard2-primary:
+        condition: service_healthy
+      shard2-secondary1:
+        condition: service_healthy
+      shard2-secondary2:
         condition: service_healthy
     networks:
       - app-network
     volumes:
-      - ./scripts/mongo-init.sh:/mongo-init.sh:ro
-    entrypoint: ["/bin/bash", "-c"]
-    command:
-      - |
-        chmod +x /mongo-init.sh
-        /mongo-init.sh
+      - ./scripts:/scripts:ro
+    entrypoint: ["/bin/bash", "/scripts/mongo-init.sh"]
     restart: "no"
 
   mongos_router:
@@ -140,12 +252,8 @@ services:
     networks:
       - app-network
     volumes:
-      - ./scripts/mongo-setup.sh:/mongo-setup.sh:ro
-    entrypoint: ["/bin/bash", "-c"]
-    command:
-      - |
-        chmod +x /mongo-setup.sh
-        /mongo-setup.sh
+      - ./scripts:/scripts:ro
+    entrypoint: ["/bin/bash", "/scripts/mongo-setup.sh"]
     restart: "no"
 
   pymongo_api:
@@ -180,5 +288,9 @@ networks:
 
 volumes:
   config-data:
-  shard1-data:
-  shard2-data:
+  shard1-primary-data:
+  shard1-secondary1-data:
+  shard1-secondary2-data:
+  shard2-primary-data:
+  shard2-secondary1-data:
+  shard2-secondary2-data:
