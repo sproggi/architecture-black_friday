@@ -95,12 +95,8 @@ services:
     networks:
       - app-network
     volumes:
-      - ./scripts/mongo-init.sh:/mongo-init.sh:ro
-    entrypoint: ["/bin/bash", "-c"]
-    command:
-      - |
-        chmod +x /mongo-init.sh
-        /mongo-init.sh
+      - ./scripts:/scripts:ro
+    entrypoint: ["/bin/bash", "/scripts/mongo-init.sh"]
     restart: "no"
 
   mongos_router:
@@ -140,12 +136,8 @@ services:
     networks:
       - app-network
     volumes:
-      - ./scripts/mongo-setup.sh:/mongo-setup.sh:ro
-    entrypoint: ["/bin/bash", "-c"]
-    command:
-      - |
-        chmod +x /mongo-setup.sh
-        /mongo-setup.sh
+      - ./scripts:/scripts:ro
+    entrypoint: ["/bin/bash", "/scripts/mongo-setup.sh"]
     restart: "no"
 
   pymongo_api:

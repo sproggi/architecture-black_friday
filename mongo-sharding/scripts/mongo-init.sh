@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo '========================================='
-echo '=== ИНИЦИАЛИЗАЦИЯ REPLICA SETS ==='
+echo '=== INITIALIZE REPLICA SETS ==='
 echo '========================================='
 
 echo ''
@@ -23,4 +23,4 @@ mongosh shard2:27019 --eval 'rs.initiate({ _id: "shard2", members: [{ _id: 0, ho
 sleep 10
 
 echo ''
-echo '=== ✅ ИНИЦИАЛИЗАЦИЯ ЗАВЕРШЕНА ==='
+echo '=== INITIALIZATION COMPLETE ==='
